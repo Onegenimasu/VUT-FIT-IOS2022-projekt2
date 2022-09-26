@@ -10,3 +10,6 @@ zip:
 
 clean:
 	rm -rf proj2 proj2.out proj2.zip debug.txt
+
+purge:
+	find /dev/shm -user "$(whoami)" -delete
