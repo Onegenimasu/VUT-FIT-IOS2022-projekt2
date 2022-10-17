@@ -1,11 +1,11 @@
 # IOS PROJEKT 2, FIT VUT 2022
 
-*Druhý projekt (synchronizace) z předmětu Operační systémy (IOS), druhý semestr bakalářského studia (BIT) na FIT VUT, ak.rok 2021/2022*
+*Druhý projekt (synchronizácia) z predmetu Operačné systémy (IOS), druhý semester bakalárskeho štúdia (BIT) na FIT VUT/BUT, ak.rok 2021/2022*
 
-⚠️ **Zveřejněno pro archivní a studijní účely — nekopírujte, ta nula by Vás mrzela. Za nic takového nenesu žádnou odpovědnost!** Všechny odevzdané projekty procházejí kontrolou plagiátorství, při níž jsou porovnávány i s dříve odevzdanými řešeními.
+⚠️ **Zverejnené pre archívne účely — nekopírujte, nula by Vás mrzela. Za nič také nenesiem žiadnu zodpovednosť!** Všetky odovzdané projekty prechádzajú kontrolou plagiátorstva, pri ktorej sa porovnávajú aj s dávnejšie odovzdanými riešeniami.
 
 <br>
 
-Hodnocení: 13 / 15<br>(srážka za předčasný výpočet maxima molekul bez použití synchronizace)
+Hodnotenie: 13 / 15<br>(zrážka za predčasný výpočet maxima molekúl)
 
-Zadání: [ZADANI.md](ZADANI.md); alt. [MOODLE PAGE](https://moodle.vut.cz/pluginfile.php/412322/mod_resource/content/3/projekt2-zadani.pdf)
+Zadanie: [ZADANI.md](ZADANI.md); originál [MOODLE](https://moodle.vut.cz/pluginfile.php/412322/mod_resource/content/3/projekt2-zadani.pdf)
