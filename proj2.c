@@ -1,21 +1,21 @@
 /**
  * @file proj2.c
- * @author GitHub User <xplagi00@vutbr.cz>
- * @brief IOS assignment 2 (synchronisation) - building H2O
- * @param NO Oxygen amount
- * @param NH Hydrogen amount
- * @param TI Max. time (ms) of waiting for enqueueing atoms
- * @param TB Max. time (ms) for molecule creation
- *
+ * @author GitHub User <xplagi0b@vutbr.cz>
+ * @brief IOS projekt 2 (synchronizácia) - Building H2O
+ * @param NO Počet atómov kyslíka
+ * @param NH Počet atómov vodíka
+ * @param TI Maximálny čas (ms) čakania atómov na zaradenie do fronty
+ * @param TB Maximálny čas (ms) na vytvorenie molekuly
+ * 
  */
 
 #include "proj2.h"
 
 void oxygen(int id_o, int atom_delay, int bond_delay) {
-    // Seeding a random number generator
+    // RNG seed
     srand(time(NULL) * getpid());
 
-    // Process start message
+    // Oznámenie začiatku procesu
     sem_wait(mutex);
     sem_wait(outlock);
     if (*action > 0) fprintf(file, "\n");
@@ -23,7 +23,7 @@ void oxygen(int id_o, int atom_delay, int bond_delay) {
     sem_post(outlock);
     sem_post(mutex);
 
-    // Enqueueing oxygen
+    // Zaradenie do fronty kyslíkov
     RANDSLEEP(atom_delay);
     sem_wait(oxy_barrier);
     sem_wait(mutex);
@@ -33,7 +33,7 @@ void oxygen(int id_o, int atom_delay, int bond_delay) {
     sem_post(outlock);
 
     if (*hydro_count >= 2) {
-        // Dequeueing atoms from respective queues
+        // Uvoľnenie atómov z fronty
         sem_post(hydro_queue);
         (*hydro_count)--;
         sem_post(hydro_queue);
@@ -41,12 +41,12 @@ void oxygen(int id_o, int atom_delay, int bond_delay) {
         sem_post(oxy_queue);
         (*oxy_count)--;
     } else {
-        // Waiting for other atoms
+        // Čakanie
         sem_post(mutex);
     }
 
     if (*water_count < *watermax) {
-        // Molecule creation
+        // Tvorba molekuly
         sem_wait(oxy_queue);
         int id_w = bond(id_o, 'O', bond_delay);
         sem_wait(bondlock);
@@ -69,7 +69,7 @@ void oxygen(int id_o, int atom_delay, int bond_delay) {
         fprintf(file, "\n%d: O %d: molecule %d created", ++(*action), id_o, id_w);
         sem_post(outlock);
     } else {
-        // No more molecules can be created
+        // Už nie je možné vytvoriť viac molekúl
         sem_post(oxy_barrier);
         sem_wait(outlock);
         fprintf(file, "\n%d: O %d: not enough H", ++(*action), id_o);
@@ -81,10 +81,10 @@ void oxygen(int id_o, int atom_delay, int bond_delay) {
 }
 
 void hydrogen(int id_h, int atom_delay, int bond_delay) {
-    // Seeding a random number generator
+    // RNG seed
     srand(time(NULL) * getpid());
 
-    // Process start message
+    // Oznámenie začiatku procesu
     sem_wait(mutex);
     sem_wait(outlock);
     if (*action > 0) fprintf(file, "\n");
@@ -92,7 +92,7 @@ void hydrogen(int id_h, int atom_delay, int bond_delay) {
     sem_post(outlock);
     sem_post(mutex);
 
-    // Enqueueing hydrogen
+    // Zaradenie do fronty vodíkov
     RANDSLEEP(atom_delay);
     sem_wait(hydro_barrier);
     sem_wait(mutex);
@@ -102,7 +102,7 @@ void hydrogen(int id_h, int atom_delay, int bond_delay) {
     sem_post(outlock);
 
     if (*hydro_count >= 2 && *oxy_count >= 1) {
-        // Dequeueing atoms from respective queues
+        // Uvoľnenie atómov z fronty
         sem_post(hydro_queue);
         (*hydro_count)--;
         sem_post(hydro_queue);
@@ -110,12 +110,12 @@ void hydrogen(int id_h, int atom_delay, int bond_delay) {
         sem_post(oxy_queue);
         (*oxy_count)--;
     } else {
-        // Waiting for other atoms
+        // Čakanie
         sem_post(mutex);
     }
 
     if (*water_count < *watermax) {
-        // Molecule creation
+        // Tvorba molekuly
         sem_wait(hydro_queue);
         int id_w = bond(id_h, 'H', bond_delay);
         sem_wait(bondlock);
@@ -136,7 +136,7 @@ void hydrogen(int id_h, int atom_delay, int bond_delay) {
         fprintf(file, "\n%d: H %d: molecule %d created", ++(*action), id_h, id_w);
         sem_post(outlock);
     } else {
-        // No more molecules can be created
+        // Už nie je možné vytvoriť viac molekúl
         sem_post(hydro_barrier);
         sem_wait(outlock);
         fprintf(file, "\n%d: H %d: not enough O or H", ++(*action), id_h);
@@ -148,29 +148,29 @@ void hydrogen(int id_h, int atom_delay, int bond_delay) {
 }
 
 int main(int argc, char const *argv[]) {
-    // Argument check
+    // Kontrola a uloženie argumentov
     if (argc != 5) {
         fprintf(stderr, "Wrong amount of arguments. Aborting!");
         exit(EXIT_FAILURE);
     }
 
-    int NO = atoi(argv[1]);  // Oxygen amount
-    int NH = atoi(argv[2]);  // Hydrogen amount
-    int TI = atoi(argv[3]);  // Max. time (ms) of waiting for enqueueing atoms
-    int TB = atoi(argv[4]);  // Max. time (ms) for molecule creation
+    int NO = atoi(argv[1]); // Počet atómov kyslíka
+    int NH = atoi(argv[2]); // Počet atómov vodíka
+    int TI = atoi(argv[3]); // Maximálny čas (ms) čakania atómov na zaradenie do fronty
+    int TB = atoi(argv[4]); // Maximálny čas (ms) na vytvorenie molekuly
     args_validate(NO, NH, TI, TB);
-
-    // Initializing semaphores and shared resources
+    
+    // Inicializácia semaforov a zdieľaných zdrojov
     if (!startup()) {
         fprintf(stderr, "Couldn't initialize semaphores or shared memory. Aborting!");
         clean();
         exit(EXIT_FAILURE);
     }
 
-    // Calculating maximum amount of molecules
-    *watermax = MIN(NO, floor(NH / 2));
+    // Výpočet maximálneho počtu molekúl
+    *watermax = MIN(NO, floor(NH/2));
 
-    // Creating NO oxygen processes and NH hydrogen processes
+    // Vytvorenie NO procesov kyslíka a NH procesov vodíka
     for (int i = 1; i <= NO; i++) {
         pid_t pid = fork();
         if (pid == 0) {
@@ -192,9 +192,8 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    // Waiting for all processes to finish
-    while (wait(NULL) > 0)
-        ;
+    // Čakanie na ukončenie všetkých procesov
+    while(wait(NULL) > 0);
     clean();
     exit(EXIT_SUCCESS);
 }
@@ -214,7 +213,7 @@ int bond(int atom_id, char atom_type, int bond_delay) {
             (*bondready)--;
         }
         (*water_count)++;
-    }
+    }    
 
     sem_post(bondlock);
     sem_wait(barrier);
@@ -243,18 +242,18 @@ void args_validate(int NO, int NH, int TI, int TB) {
         exit(EXIT_FAILURE);
     }
 
-    return;
+    return;    
 }
 
 bool startup() {
-    // Opening output file
+    // Otvorenie výstupného súboru
     file = fopen("proj2.out", "w");
     if (file == NULL) {
         fprintf(stderr, "Could not create output file. Aborting!");
         exit(EXIT_FAILURE);
     }
 
-    // Shared resources
+    // Zdieľané premenné
     MMAP(oxy_count);
     if (oxy_count == NULL)
         return false;
@@ -283,40 +282,40 @@ bool startup() {
     if (watermax == NULL)
         return false;
 
-    // Semaphores
-    mutex = sem_open("/xplagi00.mutex", O_CREAT, 0666, 1);
+    // Semafory
+    mutex = sem_open("/xplagi0b.mutex", O_CREAT, 0666, 1);
     if (mutex == SEM_FAILED)
         return false;
 
-    barrier = sem_open("/xplagi00.barrier", O_CREAT, 0666, 3);
+    barrier = sem_open("/xplagi0b.barrier", O_CREAT, 0666, 3);
     if (barrier == SEM_FAILED)
         return false;
 
-    oxy_barrier = sem_open("/xplagi00.oxy_barrier", O_CREAT, 0666, 1);
+    oxy_barrier = sem_open("/xplagi0b.oxy_barrier", O_CREAT, 0666, 1);
     if (oxy_barrier == SEM_FAILED)
         return false;
 
-    oxy_queue = sem_open("/xplagi00.oxy_queue", O_CREAT, 0666, 0);
+    oxy_queue = sem_open("/xplagi0b.oxy_queue", O_CREAT, 0666, 0);
     if (oxy_queue == SEM_FAILED)
         return false;
 
-    hydro_barrier = sem_open("/xplagi00.hydro_barrier", O_CREAT, 0666, 2);
+    hydro_barrier = sem_open("/xplagi0b.hydro_barrier", O_CREAT, 0666, 2);
     if (hydro_barrier == SEM_FAILED)
         return false;
-
-    hydro_queue = sem_open("/xplagi00.hydro_queue", O_CREAT, 0666, 0);
+    
+    hydro_queue = sem_open("/xplagi0b.hydro_queue", O_CREAT, 0666, 0);
     if (hydro_queue == SEM_FAILED)
         return false;
 
-    moleculelock = sem_open("/xplagi00.moleculelock", O_CREAT, 0666, 0);
+    moleculelock = sem_open("/xplagi0b.moleculelock", O_CREAT, 0666, 0);
     if (moleculelock == SEM_FAILED)
         return false;
-
-    bondlock = sem_open("/xplagi00.bondlock", O_CREAT, 0666, 1);
+    
+    bondlock = sem_open("/xplagi0b.bondlock", O_CREAT, 0666, 1);
     if (bondlock == SEM_FAILED)
         return false;
 
-    outlock = sem_open("/xplagi00.outlock", O_CREAT, 0666, 1);
+    outlock = sem_open("/xplagi0b.outlock", O_CREAT, 0666, 1);
     if (outlock == SEM_FAILED)
         return false;
 
@@ -325,27 +324,27 @@ bool startup() {
 }
 
 void clean() {
-    // Semaphores
+    // Semafory
     sem_close(mutex);
-    sem_unlink("/xplagi00.mutex");
+    sem_unlink("/xplagi0b.mutex");
     sem_close(barrier);
-    sem_unlink("/xplagi00.barrier");
+    sem_unlink("/xplagi0b.barrier");
     sem_close(oxy_barrier);
-    sem_unlink("/xplagi00.oxy_barrier");
+    sem_unlink("/xplagi0b.oxy_barrier");
     sem_close(oxy_queue);
-    sem_unlink("/xplagi00.oxy_queue");
+    sem_unlink("/xplagi0b.oxy_queue");
     sem_close(hydro_barrier);
-    sem_unlink("/xplagi00.hydro_barrier");
+    sem_unlink("/xplagi0b.hydro_barrier");
     sem_close(hydro_queue);
-    sem_unlink("/xplagi00.hydro_queue");
+    sem_unlink("/xplagi0b.hydro_queue");
     sem_close(moleculelock);
-    sem_unlink("/xplagi00.moleculelock");
+    sem_unlink("/xplagi0b.moleculelock");
     sem_close(bondlock);
-    sem_unlink("/xplagi00.bondlock");
+    sem_unlink("/xplagi0b.bondlock");
     sem_close(outlock);
-    sem_unlink("/xplagi00.outlock");
+    sem_unlink("/xplagi0b.outlock");
 
-    // Shared resources
+    // Zdieľané premenné
     MUNMAP(oxy_count);
     MUNMAP(hydro_count);
     MUNMAP(water_count);
@@ -354,7 +353,7 @@ void clean() {
     MUNMAP(action);
     MUNMAP(watermax);
 
-    // Output file
+    // Výstupný súbor
     if (file != NULL)
         fclose(file);
 
